@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from get_news_agent import get_news
@@ -23,6 +23,6 @@ def read_root():
     return {"message": "Intelligent News API. Use /news to fetch articles."}
 
 @app.get("/news")
-def news():
-    """Fetch news articles using the LangChain agent."""
-    return get_news()
+def news(category: str = Query(None)):
+    """Fetch news articles using the LangChain agent for the specified category."""
+    return get_news(category)

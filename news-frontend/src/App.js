@@ -6,21 +6,24 @@ function App() {
   const [newsArticles, setNewsArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState('general');
+  const categories = ['general', 'business', 'entertainment', 'health', 'science', 'sports', 'technology'];
 
   useEffect(() => {
-    fetchNews();
+    fetchNews(currentCategory);
   }, []);
 
-  const fetchNews = async () => {
+  const fetchNews = async (category) => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/news');
+      const url = `http://localhost:8000/news?category=${category}`;
+      const response = await axios.get(url);
       if (response.data.news_articles && response.data.news_articles.length > 0) {
         setNewsArticles(response.data.news_articles);
         setError(null);
       } else {
         setNewsArticles([]);
-        setError(response.data.error || 'No news articles found. Try refreshing.');
+        setError(response.data.error || `No news articles found for category: ${category}.`);
       }
       setLoading(false);
     } catch (err) {
@@ -33,10 +36,24 @@ function App() {
   return (
     <div className="container my-4">
       <h1 className="text-center mb-4">Intelligent News</h1>
+      <div className="mb-3 text-center">
+        {categories.map(category => (
+          <button
+            key={category}
+            className={`btn btn-outline-primary me-2 ${currentCategory === category ? 'active' : ''}`}
+            onClick={() => {
+              setCurrentCategory(category);
+              fetchNews(category);
+            }}
+          >
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </button>
+        ))}
+      </div>
       {loading && <p className="text-center text-muted">Loading...</p>}
       {error && <p className="text-center text-danger">{error}</p>}
       
-      <h2 className="h4 mb-3">News Articles</h2>
+      <h2 className="h4 mb-3">News Articles - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h2>
       {newsArticles.length > 0 ? (
         newsArticles.map((article, index) => (
           <div key={index} className="card mb-3">
@@ -49,11 +66,11 @@ function App() {
           </div>
         ))
       ) : (
-        !loading && !error && <p className="text-center">No news articles found.</p>
+        !loading && !error && <p className="text-center">No news articles found for this category.</p>
       )}
       
       <button
-        onClick={fetchNews}
+        onClick={() => fetchNews(currentCategory)}
         className="btn btn-primary mt-4"
       >
         Refresh News
