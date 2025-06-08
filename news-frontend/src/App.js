@@ -15,10 +15,16 @@ function App() {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:8000/news');
-      setNewsArticles(response.data.news_articles);
+      if (response.data.news_articles && response.data.news_articles.length > 0) {
+        setNewsArticles(response.data.news_articles);
+        setError(null);
+      } else {
+        setNewsArticles([]);
+        setError(response.data.error || 'No news articles found. Try refreshing.');
+      }
       setLoading(false);
     } catch (err) {
-      setError('Failed to fetch news. Ensure the backend is running at http://localhost:8000.');
+      setError('Failed to connect to backend. Ensure it is running at http://localhost:8000.');
       setLoading(false);
       console.error(err);
     }
@@ -35,15 +41,15 @@ function App() {
         newsArticles.map((article, index) => (
           <div key={index} className="card mb-3">
             <div className="card-body">
-              <h5 className="card-title">{article.title}</h5>
-              <p className="card-text">{article.description}</p>
-              <p className="text-muted small">Source: {article.source}</p>
+              <h5 className="card-title">{article.title || 'No title available'}</h5>
+              <p className="card-text">{article.description || 'No description available'}</p>
+              <p className="text-muted small">Source: {article.source || 'Unknown'}</p>
               <a href={article.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">Read more</a>
             </div>
           </div>
         ))
       ) : (
-        !loading && <p className="text-center">No news articles found.</p>
+        !loading && !error && <p className="text-center">No news articles found.</p>
       )}
       
       <button
