@@ -64,10 +64,39 @@ function App() {
                   <div className="card-body">
                     <h5 className="card-title">{article.title || 'No title available'}</h5>
                     <p className="card-text">{article.description || 'No description available'}</p>
-                    <p className="text-muted small">Source: {article.source || 'Unknown'}</p>
+                    <p className="text-muted small">
+                      Source{article.sources && article.sources.length > 1 ? 's' : ''}: 
+                      {article.sources ? article.sources.join(', ') : article.source || 'Unknown'}
+                    </p>
                     <div>
-                      <Link to={`/summary/${encodeURIComponent(article.url)}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
-                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">Read more</a>
+                      {article.urls && article.urls.length > 0 ? (
+                        <>
+                          <Link to={`/summary/${encodeURIComponent(article.urls[0])}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
+                          {article.urls.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-primary btn-sm me-2"
+                            >
+                              Read more ({article.sources[idx] || 'Source'})
+                            </a>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <Link to={`/summary/${encodeURIComponent(article.url)}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-primary btn-sm"
+                          >
+                            Read more
+                          </a>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

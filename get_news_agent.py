@@ -6,6 +6,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer, util
+import numpy as np
 
 # Explicitly load .env file
 load_dotenv()
@@ -19,19 +21,21 @@ if not GOOGLE_API_KEY:
 if not NEWS_API_KEY:
     print("Error: NEWS_API_KEY not found in .env file")
 
-# Define the tool to fetch top news headlines for a specified category
+# Initialize SentenceTransformer model
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Define the tool to fetch and cluster news headlines
 @tool
 def fetch_all_news_tool(category: str = "general") -> str:
-    """Fetch top news headlines for the specified category using NewsAPI.
+    """Fetch top news headlines for the specified category using NewsAPI and cluster similar articles.
     The input should be the category name, such as 'business', 'sports', etc.
     If no category is provided, it defaults to 'general'."""
     if not NEWS_API_KEY:
         return json.dumps({"error": "NEWS_API_KEY not set in environment variables"})
     
     all_articles = []
-    # Define multiple queries to maximize article count
     queries = [
-        {"endpoint": "top-headlines", "params": {"category": category, "country": "in"}},  # India-based news
+        {"endpoint": "top-headlines", "params": {"category": category, "country": "in"}},
         {"endpoint": "everything", "params": {"q": f"{category} india", "sortBy": "publishedAt"}}
     ]
     for query in queries:
@@ -60,11 +64,57 @@ def fetch_all_news_tool(category: str = "general") -> str:
         except requests.RequestException as e:
             print(f"Error fetching news for query {query}: {str(e)}")
     
-    # Remove duplicates based on URL
-    unique_articles = {article["url"]: article for article in all_articles}.values()
-    if not unique_articles:
+    if not all_articles:
         return json.dumps({"error": f"No articles found for category: {category}. Check API key or rate limits."})
-    return json.dumps(list(unique_articles))
+
+    # Cluster similar articles
+    clustered_articles = cluster_articles(all_articles)
+    return json.dumps(clustered_articles)
+
+def cluster_articles(articles):
+    """Cluster articles based on title and description similarity."""
+    if not articles:
+        return []
+
+    # Combine title and description for embedding
+    texts = [f"{article['title']} {article['description']}" for article in articles]
+    embeddings = model.encode(texts, convert_to_tensor=True)
+
+    # Compute cosine similarity
+    similarity_matrix = util.cos_sim(embeddings, embeddings).numpy()
+    clusters = []
+    visited = set()
+
+    for i in range(len(articles)):
+        if i in visited:
+            continue
+        cluster = [articles[i]]
+        visited.add(i)
+        for j in range(i + 1, len(articles)):
+            if j not in visited and similarity_matrix[i][j] > 0.8:  # Similarity threshold
+                cluster.append(articles[j])
+                visited.add(j)
+        clusters.append(cluster)
+
+    # Merge articles in each cluster
+    merged_articles = []
+    for cluster in clusters:
+        if len(cluster) == 1:
+            merged_articles.append(cluster[0])
+        else:
+            # Merge titles and descriptions, keep all URLs and sources
+            merged_title = max([article["title"] for article in cluster], key=len)  # Choose longest title
+            merged_description = max([article["description"] for article in cluster], key=len)  # Choose longest description
+            sources = [article["source"] for article in cluster]
+            urls = [article["url"] for article in cluster]
+            merged_articles.append({
+                "title": merged_title,
+                "description": merged_description,
+                "sources": sources,
+                "urls": urls
+            })
+    
+    return merged_articles
 
 # Define the prompt template for the ReAct agent
 prompt_template = PromptTemplate.from_template(
@@ -111,10 +161,8 @@ tools = [fetch_all_news_tool]
 # Function to get news using the agent
 def get_news(category: str = None):
     try:
-        # Construct the prompt based on category
         prompt = "fetch top news headlines" if category is None else f"fetch top {category} news headlines"
         print(f"Invoking agent with prompt: {prompt}")
-        # Create and invoke the agent with the prompt
         agent = create_react_agent(llm, tools, prompt_template)
         agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_steps=True)
         result = agent_executor.invoke({"input": prompt})
