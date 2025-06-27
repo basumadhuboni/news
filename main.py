@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from dotenv import load_dotenv
 from get_news_agent import get_news
+from agent import executor
 
 # Load environment variables
 load_dotenv()
@@ -20,9 +22,21 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     """Root endpoint to confirm the API is running."""
-    return {"message": "Intelligent News API. Use /news to fetch articles."}
+    return {"message": "Intelligent News API. Use /news to fetch articles or /query for summarization/translation."}
 
 @app.get("/news")
 def news(category: str = Query(None)):
     """Fetch news articles using the LangChain agent for the specified category."""
     return get_news(category)
+
+class QueryInput(BaseModel):
+    input: str
+
+@app.post("/query")
+async def query_agent(data: QueryInput):
+    """Process summarization and translation queries using the agent."""
+    try:
+        result = executor.invoke({"input": data.input})
+        return {"output": result["output"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")

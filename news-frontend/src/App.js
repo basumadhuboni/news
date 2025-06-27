@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
+import ArticleSummary from './ArticleSummary';
 import './App.css';
 
 function App() {
@@ -11,7 +13,7 @@ function App() {
 
   useEffect(() => {
     fetchNews(currentCategory);
-  }, []);
+  }, [currentCategory]);
 
   const fetchNews = async (category) => {
     try {
@@ -34,48 +36,56 @@ function App() {
   };
 
   return (
-    <div className="container my-4">
-      <h1 className="text-center mb-4">Intelligent News</h1>
-      <div className="mb-3 text-center">
-        {categories.map(category => (
-          <button
-            key={category}
-            className={`btn btn-outline-primary me-2 ${currentCategory === category ? 'active' : ''}`}
-            onClick={() => {
-              setCurrentCategory(category);
-              fetchNews(category);
-            }}
-          >
-            {category.charAt(0).toUpperCase() + category.slice(1)}
-          </button>
-        ))}
-      </div>
-      {loading && <p className="text-center text-muted">Loading...</p>}
-      {error && <p className="text-center text-danger">{error}</p>}
-      
-      <h2 className="h4 mb-3">News Articles - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h2>
-      {newsArticles.length > 0 ? (
-        newsArticles.map((article, index) => (
-          <div key={index} className="card mb-3">
-            <div className="card-body">
-              <h5 className="card-title">{article.title || 'No title available'}</h5>
-              <p className="card-text">{article.description || 'No description available'}</p>
-              <p className="text-muted small">Source: {article.source || 'Unknown'}</p>
-              <a href={article.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">Read more</a>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={
+          <div className="container my-4">
+            <h1 className="text-center mb-4">Intelligent News</h1>
+            <div className="mb-3 text-center">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  className={`btn btn-outline-primary me-2 ${currentCategory === category ? 'active' : ''}`}
+                  onClick={() => {
+                    setCurrentCategory(category);
+                    fetchNews(category);
+                  }}
+                >
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </button>
+              ))}
             </div>
+            {loading && <p className="text-center text-muted">Loading...</p>}
+            {error && <p className="text-center text-danger">{error}</p>}
+            <h2 className="h4 mb-3">News Articles - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h2>
+            {newsArticles.length > 0 ? (
+              newsArticles.map((article, index) => (
+                <div key={index} className="card mb-3">
+                  <div className="card-body">
+                    <h5 className="card-title">{article.title || 'No title available'}</h5>
+                    <p className="card-text">{article.description || 'No description available'}</p>
+                    <p className="text-muted small">Source: {article.source || 'Unknown'}</p>
+                    <div>
+                      <Link to={`/summary/${encodeURIComponent(article.url)}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
+                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">Read more</a>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              !loading && !error && <p className="text-center">No news articles found for this category.</p>
+            )}
+            <button
+              onClick={() => fetchNews(currentCategory)}
+              className="btn btn-primary mt-4"
+            >
+              Refresh News
+            </button>
           </div>
-        ))
-      ) : (
-        !loading && !error && <p className="text-center">No news articles found for this category.</p>
-      )}
-      
-      <button
-        onClick={() => fetchNews(currentCategory)}
-        className="btn btn-primary mt-4"
-      >
-        Refresh News
-      </button>
-    </div>
+        } />
+        <Route path="/summary/:url" element={<ArticleSummary />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
