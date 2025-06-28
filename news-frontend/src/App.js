@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
+import Navigation from './components/Navigation';
+import NewsCard from './components/NewsCard';
+import LoadingState from './components/LoadingState';
 import ArticleSummary from './ArticleSummary';
 import './App.css';
+
+// Use full width with no padding constraint
+const AppContainer = styled.div`
+  width: 100%;
+  padding: 0;
+`;
 
 function App() {
   const [newsArticles, setNewsArticles] = useState([]);
@@ -35,85 +45,72 @@ function App() {
     }
   };
 
+  // Function to extract domain from source name
+  const getDomainFromSource = (sourceName) => {
+    if (!sourceName) return 'default.com';
+    let domain = sourceName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sourceMap = {
+      'timesofindia': 'timesofindia.indiatimes.com',
+      'thehindu': 'thehindu.com',
+    };
+    return sourceMap[domain] || `${domain}.com`;
+  };
+
+  // Define news content
+  const newsContent = (
+    <>
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <p className="text-center text-danger">{error}</p>
+      ) : newsArticles.length > 0 ? (
+        <>
+          <h2 className="h4 mb-3">
+            News Articles - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}
+          </h2>
+          {newsArticles.map((article, index) => (
+            <NewsCard
+              key={index}
+              title={article.title || 'No title available'}
+              description={article.description || 'No description available'}
+              sources={
+                article.sources
+                  ? article.sources.map((source) => ({
+                      name: source,
+                      icon: `https://logo.clearbit.com/${getDomainFromSource(source)}`,
+                    }))
+                  : [{ name: article.source || 'Unknown', icon: `https://logo.clearbit.com/${getDomainFromSource(article.source)}` }]
+              }
+              url={article.urls || article.url || '#'}
+            />
+          ))}
+          <button
+            onClick={() => fetchNews(currentCategory)}
+            className="btn btn-primary mt-4"
+          >
+            Refresh News
+          </button>
+        </>
+      ) : (
+        <p className="text-center">No news articles found for this category.</p>
+      )}
+    </>
+  );
+
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={
-          <div className="container my-4">
-            <h1 className="text-center mb-4">Intelligent News</h1>
-            <div className="mb-3 text-center">
-              {categories.map(category => (
-                <button
-                  key={category}
-                  className={`btn btn-outline-primary me-2 ${currentCategory === category ? 'active' : ''}`}
-                  onClick={() => {
-                    setCurrentCategory(category);
-                    fetchNews(category);
-                  }}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </button>
-              ))}
-            </div>
-            {loading && <p className="text-center text-muted">Loading...</p>}
-            {error && <p className="text-center text-danger">{error}</p>}
-            <h2 className="h4 mb-3">News Articles - {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}</h2>
-            {newsArticles.length > 0 ? (
-              newsArticles.map((article, index) => (
-                <div key={index} className="card mb-3">
-                  <div className="card-body">
-                    <h5 className="card-title">{article.title || 'No title available'}</h5>
-                    <p className="card-text">{article.description || 'No description available'}</p>
-                    <p className="text-muted small">
-                      Source{article.sources && article.sources.length > 1 ? 's' : ''}: 
-                      {article.sources ? article.sources.join(', ') : article.source || 'Unknown'}
-                    </p>
-                    <div>
-                      {article.urls && article.urls.length > 0 ? (
-                        <>
-                          <Link to={`/summary/${encodeURIComponent(article.urls[0])}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
-                          {article.urls.map((url, idx) => (
-                            <a
-                              key={idx}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-primary btn-sm me-2"
-                            >
-                              Read more ({article.sources[idx] || 'Source'})
-                            </a>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <Link to={`/summary/${encodeURIComponent(article.url)}`} className="btn btn-secondary btn-sm me-2">Summarize</Link>
-                          <a
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-primary btn-sm"
-                          >
-                            Read more
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              !loading && !error && <p className="text-center">No news articles found for this category.</p>
-            )}
-            <button
-              onClick={() => fetchNews(currentCategory)}
-              className="btn btn-primary mt-4"
-            >
-              Refresh News
-            </button>
-          </div>
-        } />
-        <Route path="/summary/:url" element={<ArticleSummary />} />
-      </Routes>
+      <AppContainer>
+        <Navigation
+          categories={categories}
+          currentCategory={currentCategory}
+          setCurrentCategory={setCurrentCategory}
+          fetchNews={fetchNews}
+        />
+        <Routes>
+          <Route path="/" element={newsContent} />
+          <Route path="/summary/:url" element={<ArticleSummary />} />
+        </Routes>
+      </AppContainer>
     </BrowserRouter>
   );
 }

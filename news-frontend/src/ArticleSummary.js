@@ -19,6 +19,7 @@ function ArticleSummary() {
   ];
 
   useEffect(() => {
+    console.log('Fetching summary for URL:', decodedUrl); // Debug log
     const fetchSummary = async () => {
       setLoadingSummary(true);
       try {
@@ -33,7 +34,7 @@ function ArticleSummary() {
           throw new Error(errorData.detail || `HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        setSummary(data.output);
+        setSummary(data.output || 'No summary available');
       } catch (err) {
         setSummary(`❌ Error: ${err.message || 'Failed to fetch summary'}`);
       }
@@ -61,7 +62,7 @@ function ArticleSummary() {
         throw new Error(errorData.detail || `HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
-      setTranslatedSummary(data.output);
+      setTranslatedSummary(data.output || 'No translation available');
     } catch (err) {
       setTranslatedSummary(`❌ Error: ${err.message || 'Failed to translate'}`);
     }
@@ -92,7 +93,7 @@ function ArticleSummary() {
           {loadingTranslation && <p>Translating...</p>}
           {translatedSummary && (
             <div style={{ marginTop: '1rem' }}>
-              <h3>🔍 Translated Summary ({languages.find(lang => lang.code === selectedLanguage).name}):</h3>
+              <h3>🔍 Translated Summary ({languages.find(lang => lang.code === selectedLanguage)?.name || 'Unknown'}):</h3>
               <p>{translatedSummary}</p>
             </div>
           )}
