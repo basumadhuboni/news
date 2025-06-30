@@ -1,0 +1,12 @@
+fastapi
+pydantic
+python-dotenv
+langchain
+langchain-google-genai
+sentence-transformers
+numpy
+validators
+newspaper3k
+requests
+uvicorn
+gunicorn
