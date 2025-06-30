@@ -2,6 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const NewsCard = ({ title, description, sources }) => {
+  const handleDropdownChange = (event) => {
+    const url = event.target.value;
+    if (url && url !== '#') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div className="news-card">
       <h3>{title}</h3>
@@ -30,18 +37,18 @@ const NewsCard = ({ title, description, sources }) => {
         )}
       </div>
       <div className="button-container">
-        {sources.map((source, index) => (
-          <a
-            key={index}
-            href={source.url}
-            target="_blank"
-            rel="noopener noreferrer"
+        {sources && sources.length > 0 ? (
+          <select
+            onChange={handleDropdownChange}
             className="btn btn-primary"
-            style={{ marginRight: '10px' }}
+            style={{ marginRight: '10px', padding: '6px 12px' }}
           >
-            Read More ({source.name})
-          </a>
-        ))}
+            <option value="#" disabled selected>Read More</option>
+            {sources.map((source, index) => (
+              <option key={index} value={source.url}>{source.name}</option>
+            ))}
+          </select>
+        ) : null}
         <Link
           to={`/summary/${encodeURIComponent(sources[0]?.url || '#')}`}
           className="btn btn-secondary"

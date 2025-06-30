@@ -55,6 +55,7 @@ body {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Show only 2 lines of text */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
