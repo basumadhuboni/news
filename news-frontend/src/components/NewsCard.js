@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const NewsCard = ({ title, description, sources, url }) => {
+const NewsCard = ({ title, description, sources }) => {
   return (
     <div className="news-card">
       <h3>{title}</h3>
@@ -11,7 +11,7 @@ const NewsCard = ({ title, description, sources, url }) => {
           sources.map((source, index) => (
             <a
               key={index}
-              href={Array.isArray(url) ? url[index] : url}
+              href={source.url}
               target="_blank"
               rel="noopener noreferrer"
               className="source-button"
@@ -20,7 +20,7 @@ const NewsCard = ({ title, description, sources, url }) => {
                 src={source.icon}
                 alt={source.name}
                 className="source-icon"
-                onError={(e) => { e.target.src = 'https://via.placeholder.com/24'; }}
+                onError={(e) => { e.target.src = 'https://placehold.co/24x24'; }}
               />
               {source.name}
             </a>
@@ -30,31 +30,20 @@ const NewsCard = ({ title, description, sources, url }) => {
         )}
       </div>
       <div className="button-container">
-        {Array.isArray(url) ? (
-          url.map((singleUrl, index) => (
-            <a
-              key={index}
-              href={singleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary"
-              style={{ marginRight: '10px' }}
-            >
-              Read More ({sources[index]?.name || 'Source'})
-            </a>
-          ))
-        ) : (
+        {sources.map((source, index) => (
           <a
-            href={url || '#'}
+            key={index}
+            href={source.url}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
+            style={{ marginRight: '10px' }}
           >
-            Read More
+            Read More ({source.name})
           </a>
-        )}
+        ))}
         <Link
-          to={`/summary/${encodeURIComponent(url && !Array.isArray(url) ? url : (Array.isArray(url) && url.length > 0 ? url[0] : '#'))}`}
+          to={`/summary/${encodeURIComponent(sources[0]?.url || '#')}`}
           className="btn btn-secondary"
         >
           Summarization

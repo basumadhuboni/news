@@ -4,6 +4,10 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from get_news_agent import get_news
 from agent import executor
+import logging
+
+logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for more detail
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()

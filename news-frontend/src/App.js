@@ -8,7 +8,6 @@ import LoadingState from './components/LoadingState';
 import ArticleSummary from './ArticleSummary';
 import './App.css';
 
-// Use full width with no padding constraint
 const AppContainer = styled.div`
   width: 100%;
   padding: 0;
@@ -45,18 +44,6 @@ function App() {
     }
   };
 
-  // Function to extract domain from source name
-  const getDomainFromSource = (sourceName) => {
-    if (!sourceName) return 'default.com';
-    let domain = sourceName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const sourceMap = {
-      'timesofindia': 'timesofindia.indiatimes.com',
-      'thehindu': 'thehindu.com',
-    };
-    return sourceMap[domain] || `${domain}.com`;
-  };
-
-  // Define news content
   const newsContent = (
     <>
       {loading ? (
@@ -73,15 +60,7 @@ function App() {
               key={index}
               title={article.title || 'No title available'}
               description={article.description || 'No description available'}
-              sources={
-                article.sources
-                  ? article.sources.map((source) => ({
-                      name: source,
-                      icon: `https://logo.clearbit.com/${getDomainFromSource(source)}`,
-                    }))
-                  : [{ name: article.source || 'Unknown', icon: `https://logo.clearbit.com/${getDomainFromSource(article.source)}` }]
-              }
-              url={article.urls || article.url || '#'}
+              sources={article.sources.map(source => ({ name: source.name, icon: source.logo, url: source.url }))}
             />
           ))}
           <button

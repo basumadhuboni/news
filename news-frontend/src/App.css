@@ -87,3 +87,41 @@ body {
   gap: 8px;
   margin-top: 8px;
 }
+
+.read-more-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 10000; /* Increased z-index for visibility */
+  min-width: 200px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  visibility: visible; /* Explicitly ensure visibility */
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: #333;
+  font-size: 12px;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+.dropdown-item .source-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
