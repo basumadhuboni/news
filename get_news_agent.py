@@ -25,14 +25,26 @@ if not NEWS_API_KEY:
 if not COMPANY_ENRICH_API_KEY:
     print("Error: COMPANY_ENRICH_API_KEY not found in .env file")
 
-# Initialize SentenceTransformer model
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
 # Cache for logo URLs
 logo_cache = {}
 
 # Default logo URL
 DEFAULT_LOGO_URL = "https://placehold.co/24x24"
+
+# Lazy loading of the SentenceTransformer model
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        cache_folder = 'model_cache'  # Local cache directory in project root
+        try:
+            _model = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=cache_folder)
+        except Exception as e:
+            print(f"Error loading model from cache: {str(e)}")
+            # Fallback to downloading the model if cache fails
+            _model = SentenceTransformer('all-MiniLM-L6-v2')
+    return _model
 
 def get_domain_from_url(url):
     """Extract the domain from a given URL."""
@@ -133,6 +145,7 @@ def cluster_articles(articles):
     if not articles:
         return []
     texts = [f"{article['title']} {article['description']}" for article in articles]
+    model = get_model()  # Lazy load the model
     embeddings = model.encode(texts, convert_to_tensor=True)
     similarity_matrix = util.cos_sim(embeddings, embeddings).numpy()
     clusters = []
