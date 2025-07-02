@@ -19,12 +19,12 @@ function ArticleSummary() {
   ];
 
   useEffect(() => {
-    console.log('Fetching summary for URL:', decodedUrl);
+    console.log('Fetching summary for URL:', decodedUrl); // Debug log
     const fetchSummary = async () => {
       setLoadingSummary(true);
       try {
         const query = `Summarize this article: ${decodedUrl}`;
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/query`, {
+        const res = await fetch('http://localhost:8000/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ input: query }),
@@ -52,7 +52,7 @@ function ArticleSummary() {
     setLoadingTranslation(true);
     try {
       const query = `Translate this text to ${langCode}: ${summary}`;
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/query`, {
+      const res = await fetch('http://localhost:8000/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: query }),
